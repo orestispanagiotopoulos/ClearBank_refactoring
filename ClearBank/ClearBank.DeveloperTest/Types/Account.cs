@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ClearBank.DeveloperTest.Types
+﻿namespace ClearBank.DeveloperTest.Types
 {
     public class Account
     {
@@ -8,11 +6,6 @@ namespace ClearBank.DeveloperTest.Types
         public decimal Balance { get; set; }
         public AccountStatus Status { get; set; }
         public AllowedPaymentSchemes AllowedPaymentSchemes { get; set; }
-
-        //private void Debit(decimal amount)
-        //{
-        //    Balance -= amount;
-        //}
 
         public bool Pay(decimal amount, PaymentScheme scheme)
         {
