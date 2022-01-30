@@ -7,31 +7,9 @@
         public AccountStatus Status { get; set; }
         public AllowedPaymentSchemes AllowedPaymentSchemes { get; set; }
 
-        public bool Pay(decimal amount, PaymentScheme scheme)
+        public void Debit(decimal amount)
         {
-            if(CanPay(amount, scheme))
-            {
-                Balance -= amount;
-                return true;
-            }
-            return false;
-        }
-
-        private bool CanPay(decimal amount, PaymentScheme scheme)
-        {
-            switch (scheme)
-            {
-                case PaymentScheme.Bacs:
-                    return this.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Bacs);
-
-                case PaymentScheme.FasterPayments:
-                    return this.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.FasterPayments) && this.Balance >= amount;
-
-                case PaymentScheme.Chaps:
-                    return this.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Chaps) && this.Status == AccountStatus.Live;
-
-                default: return false;
-            }
+            this.Balance -= amount;
         }
     }
 }

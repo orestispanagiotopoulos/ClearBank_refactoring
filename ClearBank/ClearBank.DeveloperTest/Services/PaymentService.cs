@@ -6,11 +6,15 @@ namespace ClearBank.DeveloperTest.Services
     public class PaymentService : IPaymentService
     {
         public readonly IAccountRepositoryFactory _accountRepositoryFactory;
+        public readonly IPaymentSchemeValidator _paymentSchemeValidator;
         public readonly IConfigService _config;
         
-        public PaymentService(IAccountRepositoryFactory accountRepositoryFactory, IConfigService config)
+        public PaymentService(IAccountRepositoryFactory accountRepositoryFactory, 
+                              IPaymentSchemeValidator paymentSchemeValidator, 
+                              IConfigService config)
         {
             _accountRepositoryFactory = accountRepositoryFactory;
+            _paymentSchemeValidator = paymentSchemeValidator;
             _config = config;
         }
 
@@ -24,13 +28,17 @@ namespace ClearBank.DeveloperTest.Services
                 return new MakePaymentResult { Success = false};
             }
 
-            if (account.Pay(request.Amount, request.PaymentScheme))
+            var isValidPayment = _paymentSchemeValidator.Validate(request.PaymentScheme, request.Amount, account);
+
+            if (isValidPayment)
             {
+                account.Debit(request.Amount);
+                // account.Balance -= request.Amount;
+
                 accountRepository.UpdateAccount(account);
-                return new MakePaymentResult { Success = true };
             }
 
-            return new MakePaymentResult { Success = false };
+            return new MakePaymentResult { Success = isValidPayment };
         }
     }
 }
