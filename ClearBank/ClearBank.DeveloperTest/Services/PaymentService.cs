@@ -33,8 +33,6 @@ namespace ClearBank.DeveloperTest.Services
             if (isValidPayment)
             {
                 account.Debit(request.Amount);
-                // account.Balance -= request.Amount;
-
                 accountRepository.UpdateAccount(account);
             }
 

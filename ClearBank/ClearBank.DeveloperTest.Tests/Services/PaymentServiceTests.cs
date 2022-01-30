@@ -4,9 +4,6 @@ using ClearBank.DeveloperTest.Services.Factory;
 using ClearBank.DeveloperTest.Types;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ClearBank.DeveloperTest.Tests.Services
 {
@@ -27,7 +24,7 @@ namespace ClearBank.DeveloperTest.Tests.Services
         }
 
         [Test]
-        public void MakePayment_WhenReturnedAccountIsNull_ThenPaymentFails()
+        public void MakePayment_WhenReturnedAccountIsNull_ThenPaymentFail()
         {
             // Arrange
             var paymentService = new PaymentService(_accountRepositoryFactory.Object, _paymentSchemeValidator.Object, _config.Object);
@@ -40,6 +37,61 @@ namespace ClearBank.DeveloperTest.Tests.Services
 
             // Assert
             Assert.IsFalse(result.Success);
+
+            _accountRepositoryFactory.Verify(x => x.GetAccountRepository(It.IsAny<string>()), Times.Once);
+            _accountRepository.Verify(x => x.GetAccount(It.IsAny<string>()), Times.Once);
+        }
+
+        [Test]
+        public void MakePayment_WhenPaymentIsValid_ThenPaymentSucceed()
+        {
+            // Arrange
+            var account = new Account { Balance = 10 };
+            decimal paymentAmount = 8m;
+            var paymentService = new PaymentService(_accountRepositoryFactory.Object, _paymentSchemeValidator.Object, _config.Object);
+
+            _accountRepositoryFactory.Setup(x => x.GetAccountRepository(It.IsAny<string>())).Returns(_accountRepository.Object);
+            _accountRepository.Setup(x => x.GetAccount(It.IsAny<string>())).Returns(account);
+            _accountRepository.Setup(x => x.UpdateAccount(It.IsAny<Account>()));
+            _paymentSchemeValidator.Setup(x => x.Validate(It.IsAny<PaymentScheme>(), It.IsAny<decimal>(), It.IsAny<Account>())).Returns(true);
+
+            // Act
+            var result = paymentService.MakePayment(new MakePaymentRequest { Amount = paymentAmount });
+
+            // Assert
+            Assert.IsTrue(result.Success);
+            Assert.AreEqual(2, account.Balance);
+
+            _accountRepositoryFactory.Verify(x => x.GetAccountRepository(It.IsAny<string>()), Times.Once);
+            _accountRepository.Verify(x => x.GetAccount(It.IsAny<string>()), Times.Once);
+            _accountRepository.Verify(x => x.UpdateAccount(It.IsAny<Account>()), Times.Once);
+            _paymentSchemeValidator.Verify(x => x.Validate(It.IsAny<PaymentScheme>(), It.IsAny<decimal>(), It.IsAny<Account>()), Times.Once);
+        }
+
+        [Test]
+        public void MakePayment_WhenPaymentIsNotValid_ThenPaymentFail()
+        {
+            // Arrange
+            var account = new Account { Balance = 10 };
+            decimal paymentAmount = 8m;
+            var paymentService = new PaymentService(_accountRepositoryFactory.Object, _paymentSchemeValidator.Object, _config.Object);
+
+            _accountRepositoryFactory.Setup(x => x.GetAccountRepository(It.IsAny<string>())).Returns(_accountRepository.Object);
+            _accountRepository.Setup(x => x.GetAccount(It.IsAny<string>())).Returns(account);
+            _accountRepository.Setup(x => x.UpdateAccount(It.IsAny<Account>()));
+            _paymentSchemeValidator.Setup(x => x.Validate(It.IsAny<PaymentScheme>(), It.IsAny<decimal>(), It.IsAny<Account>())).Returns(false);
+
+            // Act
+            var result = paymentService.MakePayment(new MakePaymentRequest { Amount = paymentAmount });
+
+            // Assert
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual(10, account.Balance);
+
+            _accountRepositoryFactory.Verify(x => x.GetAccountRepository(It.IsAny<string>()), Times.Once);
+            _accountRepository.Verify(x => x.GetAccount(It.IsAny<string>()), Times.Once);
+            _accountRepository.Verify(x => x.UpdateAccount(It.IsAny<Account>()), Times.Never);
+            _paymentSchemeValidator.Verify(x => x.Validate(It.IsAny<PaymentScheme>(), It.IsAny<decimal>(), It.IsAny<Account>()), Times.Once);
         }
     }
 }

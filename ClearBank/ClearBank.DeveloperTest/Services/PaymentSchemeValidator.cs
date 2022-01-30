@@ -8,7 +8,9 @@ namespace ClearBank.DeveloperTest.Services
         public bool Validate(PaymentScheme paymentScheme, decimal amount, Account account)
         {
             if (account == null)
+            {
                 return false;
+            }
 
             switch (paymentScheme)
             {
